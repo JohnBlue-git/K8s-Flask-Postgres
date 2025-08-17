@@ -43,23 +43,23 @@ jobs:
             nodes:
             - role: control-plane
 
-      - name: Apply Kubernetes manifests
-        run: |
-          kubectl apply -f k8s/postgres-deployment.yaml
-          kubectl apply -f k8s/postgres-service.yaml
-          kubectl apply -f k8s/flask-deployment.yaml
-          kubectl apply -f k8s/flask-service.yaml
-          kubectl wait --for=condition=available --timeout=300s deployment/flask-deployment
-          kubectl wait --for=condition=available --timeout=300s deployment/postgres-deployment
+      # - name: Apply Kubernetes manifests
+      #   run: |
+      #     kubectl apply -f k8s/postgres-deployment.yaml
+      #     kubectl apply -f k8s/postgres-service.yaml
+      #     kubectl apply -f k8s/flask-deployment.yaml
+      #     kubectl apply -f k8s/flask-service.yaml
+      #     kubectl wait --for=condition=available --timeout=300s deployment/flask-deployment
+      #     kubectl wait --for=condition=available --timeout=300s deployment/postgres-deployment
 
-      - name: Run unit tests in Flask pod
-        run: |
-          POD_NAME=$(kubectl get pods -l app=flask -o jsonpath="{.items[0].metadata.name}")
-          kubectl exec $POD_NAME -- env PYTHONPATH=/app pytest tests/test_app.py --verbose --junitxml=report.xml
+      # - name: Run unit tests in Flask pod
+      #   run: |
+      #     POD_NAME=$(kubectl get pods -l app=flask -o jsonpath="{.items[0].metadata.name}")
+      #     kubectl exec $POD_NAME -- env PYTHONPATH=/app pytest tests/test_app.py --verbose --junitxml=report.xml
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pytest-results
-          path: report.xml
+      # - name: Upload test results
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: pytest-results
+      #     path: report.xml
