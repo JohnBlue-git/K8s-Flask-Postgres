@@ -85,6 +85,7 @@ cd web
 docker build -t <yourdockerhubusername>/flask-app .
 docker push <yourdockerhubusername>/flask-app
 # docker build -t johnbluedocker/flask-app .
+# docker push johnbluedocker/flask-app .
 ```
 
 ---
@@ -198,12 +199,13 @@ kubectl config use-context <your-cluster-context>
 kubectl apply -f ./k8s
 ```
 
+Then we apply k8s
 ```bash
+# apply
 kubectl apply -f k8s/postgres-deployment.yaml
 kubectl apply -f k8s/postgres-service.yaml
 kubectl apply -f k8s/flask-deployment.yaml
 kubectl apply -f k8s/flask-service.yaml
-
 # or
 kubectl apply -f ./k8s
 
