@@ -196,6 +196,7 @@ curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-
 sudo install minikube-linux-amd64 /usr/local/bin/minikube
 # 2. **Start a cluster**:
 minikube start
+minikube stop --all
 
 # 🔹 **Option 2: Use a Cloud Cluster (e.g., GKE, EKS, AKS)**
 # If you're deploying to a cloud provider, make sure:

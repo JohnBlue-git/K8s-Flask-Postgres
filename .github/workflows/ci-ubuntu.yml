@@ -12,7 +12,10 @@ jobs:
 
     strategy:
       matrix: # Use matrix
-        os: [ubuntu-latest, ubuntu-22.04, ubuntu-20.04] 
+        # Simplified for testing; re-add ubuntu-22.04, ubuntu-20.04 later
+        os: [ubuntu-latest]
+        # Multiple (container name "Minikube" conflict)
+        #os: [ubuntu-latest, ubuntu-22.04, ubuntu-20.04]
 
     steps:
       - name: Checkout code
@@ -41,18 +44,33 @@ jobs:
           mv minikube-linux-amd64 /usr/local/bin/minikube
           minikube version
 
+      # X Exiting due to DRV_AS_ROOT: The "docker" driver should not be used with root privileges.
       # - name: Start Minikube cluster
       #   run: |
-      #     # Create a non-root user
-      #     useradd -m -s /bin/bash ciuser
-      #     usermod -aG docker ciuser
-      #     # Ensure Docker socket is accessible
-      #     chown ciuser:docker /var/run/docker.sock
-      #     # Run Minikube as non-root user
-      #     su - ciuser -c "minikube start --driver=docker --wait=all --nodes=1 --kubernetes-version=v1.28.0"
-      #     su - ciuser -c "minikube status"
-      #     su - ciuser -c "kubectl cluster-info"
-      #     su - ciuser -c "kubectl get nodes"
+      #     # Start Minikube with Docker driver
+      #     minikube start --driver=docker --wait=all --nodes=1
+      #     # Verify cluster
+      #     minikube status
+      #     kubectl cluster-info
+      #     kubectl get nodes
+
+      - name: Clean up existing Minikube containers
+        run: |
+          docker rm -f minikube minikube-preload-sidecar || true
+          minikube delete || true
+
+      - name: Start Minikube cluster
+        run: |
+          # Create a non-root user
+          useradd -m -s /bin/bash ciuser
+          usermod -aG docker ciuser
+          # Ensure Docker socket is accessible
+          chown ciuser:docker /var/run/docker.sock
+          # Run Minikube as non-root user
+          su - ciuser -c "minikube start --driver=docker --wait=all --nodes=1 --kubernetes-version=v1.28.0"
+          su - ciuser -c "minikube status"
+          su - ciuser -c "kubectl cluster-info"
+          su - ciuser -c "kubectl get nodes"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -71,17 +89,15 @@ jobs:
 
       # - name: Apply Kubernetes manifests
       #   run: |
+      #     # Copy kubectl config to root user
+      #     cp -r /home/ciuser/.kube /root/.kube
+      #     # Apply
       #     kubectl apply -f k8s/postgres-deployment.yaml
       #     kubectl apply -f k8s/postgres-service.yaml
       #     kubectl apply -f k8s/flask-deployment.yaml
       #     kubectl apply -f k8s/flask-service.yaml
       #     kubectl wait --for=condition=available --timeout=300s deployment/flask-deployment
       #     kubectl wait --for=condition=available --timeout=300s deployment/postgres-deployment
-
-            # Copy kubectl config to root user
-            # cp -r /home/ciuser/.kube /root/.kube
-            # Apply
-
 
       # - name: Run unit tests in Flask pod
       #   run: |
