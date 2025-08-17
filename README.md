@@ -11,15 +11,22 @@ We’ll deploy:
 ## 📁 Project Structure
 
 ```
-k8s-flask-postgres/
-├── web/
-│   ├── app.py
-│   └── Dockerfile
-├── k8s/
+├── NOTE.md
+├── README.md
+├── bin
+│   └── act
+├── ci-ubuntu.yml
+├── k8s
 │   ├── flask-deployment.yaml
 │   ├── flask-service.yaml
 │   ├── postgres-deployment.yaml
 │   └── postgres-service.yaml
+└── web
+    ├── Dockerfile
+    ├── app.py
+    ├── requirements.txt
+    └── tests
+        └── test_app.py
 ```
 
 ---
@@ -243,6 +250,28 @@ curl http://192.168.49.2:30007
 ```
 
 You should see: ✅ Connected to PostgreSQL!
+
+## 🌐 6. Test App in docker container
+
+```bash
+POD_NAME=$(kubectl get pods -l app=flask -o jsonpath="{.items[0].metadata.name}")
+kubectl exec $POD_NAME -- env PYTHONPATH=/app pytest tests/test_app.py --verbose --junitxml=report.xml
+```
+
+You should see: 
+```
+============================= test session starts ==============================
+platform linux -- Python 3.11.13, pytest-8.3.2, pluggy-1.6.0 -- /usr/local/bin/python3.11
+cachedir: .pytest_cache
+rootdir: /app
+collecting ... collected 2 items
+
+tests/test_app.py::test_hello_success PASSED                             [ 50%]
+tests/test_app.py::test_hello_db_failure PASSED                          [100%]
+
+--------------------- generated xml file: /app/report.xml ----------------------
+============================== 2 passed in 0.13s ===============================
+```
 
 ---
 
