@@ -75,7 +75,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: johnbluedocker
@@ -87,26 +87,62 @@ jobs:
           docker build -t johnbluedocker/flask-app:latest .
           docker push johnbluedocker/flask-app:latest
 
-      # - name: Apply Kubernetes manifests
-      #   run: |
-      #     # Copy kubectl config to root user
-      #     cp -r /home/ciuser/.kube /root/.kube
-      #     # Apply
-      #     kubectl apply -f k8s/postgres-deployment.yaml
-      #     kubectl apply -f k8s/postgres-service.yaml
-      #     kubectl apply -f k8s/flask-deployment.yaml
-      #     kubectl apply -f k8s/flask-service.yaml
-      #     kubectl wait --for=condition=available --timeout=300s deployment/flask-deployment
-      #     kubectl wait --for=condition=available --timeout=300s deployment/postgres-deployment
+      - name: Apply Kubernetes manifests
+        run: |
+          # Copy kubectl config to root user
+          cp -r /home/ciuser/.kube /root/.kube
+          # Apply
+          kubectl apply -f k8s/postgres-deployment.yaml
+          kubectl apply -f k8s/postgres-service.yaml
+          kubectl apply -f k8s/flask-deployment.yaml
+          kubectl apply -f k8s/flask-service.yaml
+          # This command instructs Kubernetes to wait until the flask, postgres deployment reaches the available condition.
+          kubectl wait --for=condition=available --timeout=300s deployment/flask
+          kubectl wait --for=condition=available --timeout=300s deployment/postgres
 
-      # - name: Run unit tests in Flask pod
-      #   run: |
-      #     POD_NAME=$(kubectl get pods -l app=flask -o jsonpath="{.items[0].metadata.name}")
-      #     kubectl exec $POD_NAME -- env PYTHONPATH=/app pytest tests/test_app.py --verbose --junitxml=report.xml
+      - name: Run unit tests in Flask pod
+        run: |
+          POD_NAME=$(kubectl get pods -l app=flask -o jsonpath="{.items[0].metadata.name}")
+          kubectl exec $POD_NAME -- env PYTHONPATH=/app pytest tests/test_app.py --verbose --junitxml=/app/report.xml
+          # option 1
+          # if [ $? -eq 0 ]; then
+          #   echo "All tests passed, pushing Docker image..."
+          #   docker push myimage:stable
+          # else
+          #   echo "Tests failed or partially passed, skipping Docker push."
+          #   exit 1
+          # fi
+          # option 2
+          TEST_EXIT_CODE=$?
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "Pytest failed or was interrupted, skipping Docker push."
+            exit 1
+          fi
+          # to make sure ... 
+          kubectl cp $POD_NAME:/app/report.xml ./report.xml
+      - name: Check test results (option 2)
+        run: |
+          python -c '
+          import xml.etree.ElementTree as ET
+          tree = ET.parse("report.xml")
+          testsuite = tree.getroot()
+          failures = int(testsuite.get("failures", 0))
+          errors = int(testsuite.get("errors", 0))
+          skipped = int(testsuite.get("skipped", 0))
+          if failures == 0 and errors == 0 and skipped == 0:
+              print("All tests passed, pushing Docker image...")
+              print("::set-output name=push_image::true")
+          else:
+              print(f"Tests partially passed (failures: {failures}, errors: {errors}, skipped: {skipped}), skipping Docker push.")
+              print("::set-output name=push_image::false")
+          '
+      - name: Push Docker image (option 2)
+        if: steps.check.outputs.push_image == 'true' # not yet ok now ...
+        run: docker push johnbluedocker/flask-app:stable
 
-      # - name: Upload test results
-      #   if: always()
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: pytest-results
-      #     path: report.xml
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results
+          path: report.xml
