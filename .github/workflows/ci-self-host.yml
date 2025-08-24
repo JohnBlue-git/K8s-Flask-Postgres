@@ -24,15 +24,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          apt-get update
-          apt-get install -y curl ca-certificates conntrack
+          sudo apt-get update
+          sudo apt-get install -y curl ca-certificates conntrack
           # Install Node.js (if not already in image)
           curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-          apt-get install -y nodejs
+          sudo apt-get install -y nodejs
           node --version
           npm --version
           # Install Docker CLI (if not already in image)
-          apt-get install -y docker.io
+          sudo apt-get install -y docker.io
           docker --version
           # Install kubectl
           curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
