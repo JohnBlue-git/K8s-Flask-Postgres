@@ -101,28 +101,33 @@ jobs:
           kubectl wait --for=condition=available --timeout=300s deployment/postgres
 
       - name: Run unit tests in Flask pod
+        # option 1: only continue under all pass case
+        # run: |
+        #   POD_NAME=$(kubectl get pods -l app=flask -o jsonpath="{.items[0].metadata.name}")
+        #   kubectl exec $POD_NAME -- env PYTHONPATH=/app pytest tests/test_app.py --verbose --junitxml=/app/report.xml
+        #   if [ $? -eq 0 ]; then
+        #     echo "All tests passed, pushing Docker image..."
+        #     echo "PUSH_IMAGE=true" >> $GITHUB_ENV
+        #   else
+        #     echo "Tests failed or partially passed, skipping Docker push."
+        #     echo "PUSH_IMAGE=false" >> $GITHUB_ENV
+        #     exit 1
+        #   fi
+        # option 2: test but bot necessary to be all pass 
         run: |
+          # run test
           POD_NAME=$(kubectl get pods -l app=flask -o jsonpath="{.items[0].metadata.name}")
           kubectl exec $POD_NAME -- env PYTHONPATH=/app pytest tests/test_app.py --verbose --junitxml=/app/report.xml
-          # option 1
-          # if [ $? -eq 0 ]; then
-          #   echo "All tests passed, pushing Docker image..."
-          #   docker push myimage:stable
-          # else
-          #   echo "Tests failed or partially passed, skipping Docker push."
-          #   exit 1
-          # fi
-          # option 2
           TEST_EXIT_CODE=$?
           if [ $TEST_EXIT_CODE -ne 0 ]; then
             echo "Pytest failed or was interrupted, skipping Docker push."
             exit 1
           fi
-          # to make sure ... 
+          # make sure report.xml
           kubectl cp $POD_NAME:/app/report.xml ./report.xml
-      - name: Check test results (option 2)
-        run: |
+          # check test
           python -c '
+          import subprocess
           import xml.etree.ElementTree as ET
           tree = ET.parse("report.xml")
           testsuite = tree.getroot()
@@ -131,18 +136,29 @@ jobs:
           skipped = int(testsuite.get("skipped", 0))
           if failures == 0 and errors == 0 and skipped == 0:
               print("All tests passed, pushing Docker image...")
-              print("::set-output name=push_image::true")
+              # option: using step outputs
+              # subprocess.run("echo push_image=true >> $GITHUB_OUTPUT", shell=True, check=True)
+              # option: using enviroment variable
+              subprocess.run("echo PUSH_IMAGE=true >> $GITHUB_ENV", shell=True, check=True)
           else:
               print(f"Tests partially passed (failures: {failures}, errors: {errors}, skipped: {skipped}), skipping Docker push.")
-              print("::set-output name=push_image::false")
+              # option: using step outputs
+              # subprocess.run("echo push_image=false >> $GITHUB_OUTPUT", shell=True, check=True)
+              # option: using enviroment variable
+              subprocess.run("echo PUSH_IMAGE=false >> $GITHUB_ENV", shell=True, check=True)
           '
-      - name: Push Docker image (option 2)
-        if: steps.check.outputs.push_image == 'true' # not yet ok now ...
+
+      - name: Push Docker image
+        # option: usgin step outputs
+        # if: ${{ steps.step9.outputs.push_image == 'true' }}
+        # run: docker push johnbluedocker/flask-app:stable
+        # option: using enviroment variable
+        if: ${{ env.PUSH_IMAGE == 'true' }}
         run: docker push johnbluedocker/flask-app:stable
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pytest-results
-          path: report.xml
+      # - name: Upload test results
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: pytest-results
+      #     path: report.xml
