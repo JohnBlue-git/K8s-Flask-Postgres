@@ -157,9 +157,9 @@ jobs:
         if: ${{ env.PUSH_IMAGE == 'true' }}
         run: docker push johnbluedocker/flask-app:stable
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pytest-results
-          path: report.xml
+      # - name: Upload test results
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: pytest-results
+      #     path: report.xml
