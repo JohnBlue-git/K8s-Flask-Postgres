@@ -13,8 +13,8 @@ jobs:
     strategy:
       matrix: # Use matrix
         # Simplified for only testing ubuntu-latest
-        #  and slef-hosted is a real build machine
-        os: [ubuntu-latest, [self-hosted, linux, x64]]
+        #  and slef-hosted is a real build machine [self-hosted, linux, x64], ...
+        os: [ubuntu-latest, self-hosted]
         # Multiple (container name "Minikube" conflict)
         #os: [ubuntu-latest, ubuntu-22.04, ubuntu-20.04]
 
