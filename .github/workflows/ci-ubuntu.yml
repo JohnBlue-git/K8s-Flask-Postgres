@@ -10,16 +10,17 @@ jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}  # Use matrix variable
 
+    strategy:
+      matrix: # Use matrix
+        # Simplified for only testing ubuntu-latest
+        #  and slef-hosted is a real build machine
+        os: [ubuntu-latest, [self-hosted, linux, x64]]
+        # Multiple (container name "Minikube" conflict)
+        #os: [ubuntu-latest, ubuntu-22.04, ubuntu-20.04]
+
     # for writing to achievements
     permissions:
       actions: write
-
-    strategy:
-      matrix: # Use matrix
-        # Simplified for testing; re-add ubuntu-22.04, ubuntu-20.04 later
-        os: [ubuntu-latest]
-        # Multiple (container name "Minikube" conflict)
-        #os: [ubuntu-latest, ubuntu-22.04, ubuntu-20.04]
 
     steps:
       - name: Checkout code
