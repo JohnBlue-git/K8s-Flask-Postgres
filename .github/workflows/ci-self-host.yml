@@ -22,28 +22,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y curl ca-certificates conntrack
-          # Install Node.js (if not already in image)
-          curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-          sudo apt-get install -y nodejs
-          node --version
-          npm --version
-          # Install Docker CLI (if not already in image)
-          sudo apt-get install -y docker.io
-          docker --version
-          # Install kubectl
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x kubectl
-          mv kubectl /usr/local/bin/
-          kubectl version --client
-          # Install Minikube
-          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-          chmod +x minikube-linux-amd64
-          mv minikube-linux-amd64 /usr/local/bin/minikube
-          minikube version
+      # - name: Install dependencies
+      #   run: |
+      #     sudo apt-get update
+      #     # Install Minikube
+      #     curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+      #     chmod +x minikube-linux-amd64
+      #     mv minikube-linux-amd64 /usr/local/bin/minikube
+      #     minikube version
 
       # X Exiting due to DRV_AS_ROOT: The "docker" driver should not be used with root privileges.
       # - name: Start Minikube cluster
@@ -62,16 +48,11 @@ jobs:
 
       - name: Start Minikube cluster
         run: |
-          # Create a non-root user
-          useradd -m -s /bin/bash ciuser
-          usermod -aG docker ciuser
-          # Ensure Docker socket is accessible
-          chown ciuser:docker /var/run/docker.sock
           # Run Minikube as non-root user
-          su - ciuser -c "minikube start --driver=docker --wait=all --nodes=1 --kubernetes-version=v1.28.0"
-          su - ciuser -c "minikube status"
-          su - ciuser -c "kubectl cluster-info"
-          su - ciuser -c "kubectl get nodes"
+          minikube start --driver=docker --wait=all --nodes=1 --kubernetes-version=v1.28.0
+          minikube status
+          kubectl cluster-info
+          kubectl get nodes
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -90,8 +71,6 @@ jobs:
 
       - name: Apply Kubernetes manifests
         run: |
-          # Copy kubectl config to root user
-          cp -r /home/ciuser/.kube /root/.kube
           # Apply
           kubectl apply -f k8s/postgres-deployment.yaml
           kubectl apply -f k8s/postgres-service.yaml
