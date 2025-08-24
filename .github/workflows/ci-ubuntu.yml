@@ -6,12 +6,13 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  actions: write
-
 jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}  # Use matrix variable
+
+    # for writing to achievements
+    permissions:
+      actions: write
 
     strategy:
       matrix: # Use matrix
