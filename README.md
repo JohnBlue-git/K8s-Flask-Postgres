@@ -209,7 +209,7 @@ kubectl config use-context <your-cluster-context>
 kubectl apply -f ./k8s
 ```
 
-🚀 Apply to k8s
+🚀 Apply service to k8s
 ```bash
 # apply
 kubectl apply -f k8s/postgres-deployment.yaml
@@ -484,39 +484,6 @@ jobs:
           path: report.xml
 ```
 
-## Github Action: How to Register a Self-Hosted GitHub Action Runner
-
-Navigate to the Runner Settings:
-* Go to your GitHub repository, organization, or user settings:
-    * Repository: Open your repository → Click Settings → Actions → Runners.
-    * Organization: Go to the organization → Settings → Actions → Runners.
-    * User: Go to your user settings → Developer settings → GitHub Actions → Runners.
-* Click New self-hosted runner (or Add runner).
-
-And there would provide guidances provided by Github. Take Linux Architecture for example:
-```bash
-# Create a folder
-$ mkdir actions-runner && cd actions-runner
-
-# Download the latest runner package
-$ curl -o actions-runner-linux-x64-2.328.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.328.0/actions-runner-linux-x64-2.328.0.tar.gz
-
-# Optional: Validate the hash
-$ echo "<token>  actions-runner-linux-x64-2.328.0.tar.gz" | shasum -a 256 -c
-
-# Extract the installer
-$ tar xzf ./actions-runner-linux-x64-2.328.0.tar.gz
-```
-
-🚀 Configure and Run
-```
-# Create the runner and start the configuration experience
-$ ./config.sh --url https://github.com/JohnBlue-git/K8s-Flask-Postgres --token <token>
-
-# Last step, run it!
-$ ./run.sh
-```
-
 ## Github Action: How to Test CI/CD locally
 
 Install act (a simulator)
@@ -558,6 +525,41 @@ act push -j build-and-test -v -P ubuntu-latest=ghcr.io/catthehacker/ubuntu:js-22
 # Why set /tmp/artifacts ?
 # ::error::Unable to get the ACTIONS_RUNTIME_TOKEN env variable
 https://stackoverflow.com/questions/79112070/errorunable-to-get-the-actions-runtime-token-env-variable
+```
+
+Then, `act` will trigger and run workfolw that attached with `os: [ubuntu-latest]`.
+
+## Github Action: How to Register a Self-Hosted GitHub Action Runner
+
+Navigate to the Runner Settings:
+* Go to your GitHub repository, organization, or user settings:
+    * Repository: Open your repository → Click Settings → Actions → Runners.
+    * Organization: Go to the organization → Settings → Actions → Runners.
+    * User: Go to your user settings → Developer settings → GitHub Actions → Runners.
+* Click New self-hosted runner (or Add runner).
+
+And there would provide guidances provided by Github. Take Linux Architecture for example:
+```bash
+# Create a folder
+$ mkdir actions-runner && cd actions-runner
+
+# Download the latest runner package
+$ curl -o actions-runner-linux-x64-2.328.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.328.0/actions-runner-linux-x64-2.328.0.tar.gz
+
+# Optional: Validate the hash
+$ echo "<token>  actions-runner-linux-x64-2.328.0.tar.gz" | shasum -a 256 -c
+
+# Extract the installer
+$ tar xzf ./actions-runner-linux-x64-2.328.0.tar.gz
+```
+
+🚀 Configure and Run
+```
+# Create the runner and start the configuration experience
+$ ./config.sh --url https://github.com/JohnBlue-git/K8s-Flask-Postgres --token <token>
+
+# Last step, run it!
+$ ./run.sh
 ```
 
 ## Github Action: How to skip CI triggerring
